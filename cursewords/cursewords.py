@@ -24,7 +24,7 @@ from blessed import Terminal
 
 from . import characters
 from . import puz
-from .printer import printer_output
+from .printer import printer_output, printer_output_html
 
 echo = functools.partial(print, end='', flush=True)
 
@@ -173,6 +173,26 @@ class Grid:
             self.start_time, self.timer_active = timer_bytes.decode().split(',')
         else:
             self.start_time, self.timer_active = 0, 1
+
+    def render_grid_html(self, empty=False, blank=False, solution=False):
+        grid_rows = ["<table>"]
+
+        for i in range(self.row_count):
+            grid_rows.append("    <tr>")
+            for j in range(self.column_count):
+                pos = (j, i)
+                cell = self.cells.get(pos)
+                num = f'<sup>{cell.number}</sup>' if cell.number and not empty else ''
+                value = cell.solution if solution and not empty else ''
+                value = f'<span class="circle">{value}</span>' if cell.circled and cell.solution and not empty else value
+                block = 'class="block"' if cell.is_block and not empty else ''
+                grid_rows.append(f'        <td {block}>{num}{value}</td>')
+            grid_rows.append("    </tr>")
+
+        grid_rows.append("</table>")
+
+        return grid_rows
+
 
     def render_grid(self, empty=False, blank=False, solution=False):
         grid_rows = []
@@ -697,7 +717,7 @@ def main():
         and space bar switches the cursor direction.""",
         usage=textwrap.dedent("""\
             cursewords [-h] [--downs-only] [--version] PUZfile
-            print mode: cursewords [--print] [--blank | --solution] [--width INT] PUZfile"""))
+            print mode: cursewords [--print | --html] [--blank | --solution] [--width INT] PUZfile"""))
 
     parser.add_argument('filename', metavar='PUZfile',
                         help="""path of puzzle file in the \
@@ -706,13 +726,15 @@ def main():
                         help="""displays only the down clues""")
 
     print_group = parser.add_argument_group('print mode', description="""\
-        If the --print flag is explicitly provided, or if cursewords
+        If the --print (or --html) flag is explicitly provided, or if cursewords
         is not running in an interactive terminal (because its
         output is being piped or redirected), print a formatted
         grid and set of clues to stdout instead of starting an interactive
         session.""")
     print_group.add_argument('--print', action='store_true', help="""\
         output formatted grid and clues to stdout""")
+    print_group.add_argument('--html', action='store_true', help="""\
+        output html grid and clues to stdout""")
 
     print_fill = print_group.add_mutually_exclusive_group()
     print_fill.add_argument('--blank', action='store_true', help="""\
@@ -729,6 +751,7 @@ def main():
     filename = args.filename
     downs_only = args.downs_only
     print_mode = args.print or not sys.stdout.isatty()
+    html_mode = args.html
     print_style = ('solution' if args.solution
                    else 'blank' if args.blank
                    else None)
@@ -746,6 +769,11 @@ def main():
 
     grid = Grid(grid_x, grid_y, term)
     grid.load(puzfile)
+
+    if html_mode:
+        printer_output_html(grid, style=print_style, width=print_width,
+                       downs_only=downs_only)
+        sys.exit()
 
     if print_mode:
         printer_output(grid, style=print_style, width=print_width,

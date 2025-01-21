@@ -2,6 +2,45 @@ import math
 import sys
 import textwrap
 
+def printer_output_html(grid, style=None, width=None, downs_only=False):
+    # print(locals())
+    # print(vars(grid))
+
+    print_width = width or (92 if not sys.stdout.isatty()
+                            else min(grid.term.width, 96))
+
+    clue_lines = ['ACROSS', '']
+    clue_lines.extend(['. '.join([str(entry['num']), entry['clue'].strip()])
+                       for entry in grid.clues['across']])
+    clue_lines.append('')
+
+    if downs_only:
+        clue_lines = []
+
+    clue_lines.extend(['DOWN', ''])
+    clue_lines.extend(['. '.join([str(entry['num']), entry['clue'].strip()])
+                       for entry in grid.clues['down']])
+
+    render_args = {'blank': style == 'blank', 'solution': style == 'solution'}
+
+    grid_lines = grid.render_grid_html(**render_args)
+    grid_lines.append('')
+
+    if print_width < len(grid_lines[0]):
+        sys.exit(f'Puzzle is {len(grid_lines[0])} columns wide, '
+                 f'cannot be printed at {print_width} columns.')
+
+    print_width = min(print_width, 2 * len(grid_lines[0]))
+
+    print(f'{grid.title} - {grid.author}')
+    print()
+
+    for clue in clue_lines:
+        print(clue)
+
+    for line in grid_lines:
+        print(line)
+
 def printer_output(grid, style=None, width=None, downs_only=False):
     print_width = width or (92 if not sys.stdout.isatty()
                             else min(grid.term.width, 96))
