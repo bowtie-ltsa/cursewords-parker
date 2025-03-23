@@ -2,44 +2,34 @@ import math
 import sys
 import textwrap
 
-def printer_output_html(grid, style=None, width=None, downs_only=False):
-    # print(locals())
-    # print(vars(grid))
+def printer_output_json(grid, path_to_filename, style=None, width=None, downs_only=False):
+    filename = path_to_filename.split('/')[-1].split('.')[0]
+    print(f'{{')
+    print(f'  "title": `{grid.title} • {grid.author} • {filename}`,')
 
-    print_width = width or (92 if not sys.stdout.isatty()
-                            else min(grid.term.width, 96))
+    print(f'  "clues": `')
 
-    clue_lines = ['ACROSS', '']
-    clue_lines.extend(['. '.join([str(entry['num']), entry['clue'].strip()])
-                       for entry in grid.clues['across']])
-    clue_lines.append('')
+    if not downs_only:
+        print('<div class="clue clue-across"><span class="direction">ACROSS</span></div>')
+        for entry in grid.clues['across']:
+            print(f'<div class="clue clue-across"><span class="num">{entry["num"]}</span> <span class="clue-text">{entry["clue"].strip()}</span></div>')
 
-    if downs_only:
-        clue_lines = []
+    print('<div class="clue clue-down"><span class="direction">DOWN</span></div>')
+    for entry in grid.clues['down']:
+        print(f'<div class="clue clue-down"><span class="num">{entry["num"]}</span> <span class="clue-text">{entry["clue"].strip()}</span></div>')
 
-    clue_lines.extend(['DOWN', ''])
-    clue_lines.extend(['. '.join([str(entry['num']), entry['clue'].strip()])
-                       for entry in grid.clues['down']])
+    print(f'  `,')
 
     render_args = {'blank': style == 'blank', 'solution': style == 'solution'}
-
     grid_lines = grid.render_grid_html(**render_args)
-    grid_lines.append('')
-
-    if print_width < len(grid_lines[0]):
-        sys.exit(f'Puzzle is {len(grid_lines[0])} columns wide, '
-                 f'cannot be printed at {print_width} columns.')
-
-    print_width = min(print_width, 2 * len(grid_lines[0]))
-
-    print(f'{grid.title} - {grid.author}')
-    print()
-
-    for clue in clue_lines:
-        print(clue)
-
+    print(f'  "grid": `')
     for line in grid_lines:
         print(line)
+    print(f'  `,')
+
+    print(f'  "column_count": {grid.column_count},')
+    print(f'  "row_count": {grid.row_count}')
+    print(f'}}')
 
 def printer_output(grid, style=None, width=None, downs_only=False):
     print_width = width or (92 if not sys.stdout.isatty()

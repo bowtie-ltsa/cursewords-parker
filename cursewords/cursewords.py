@@ -24,7 +24,7 @@ from blessed import Terminal
 
 from . import characters
 from . import puz
-from .printer import printer_output, printer_output_html
+from .printer import printer_output, printer_output_json
 
 echo = functools.partial(print, end='', flush=True)
 
@@ -175,10 +175,10 @@ class Grid:
             self.start_time, self.timer_active = 0, 1
 
     def render_grid_html(self, empty=False, blank=False, solution=False):
-        grid_rows = ["<table>"]
+        grid_rows = ['<table class="crossword">']
 
         for i in range(self.row_count):
-            grid_rows.append("    <tr>")
+            grid_rows.append('    <tr>')
             for j in range(self.column_count):
                 pos = (j, i)
                 cell = self.cells.get(pos)
@@ -187,9 +187,9 @@ class Grid:
                 value = f'<span class="circle">{value}</span>' if cell.circled and cell.solution and not empty else value
                 block = 'class="block"' if cell.is_block and not empty else ''
                 grid_rows.append(f'        <td {block}>{num}{value}</td>')
-            grid_rows.append("    </tr>")
+            grid_rows.append('    </tr>')
 
-        grid_rows.append("</table>")
+        grid_rows.append('</table>')
 
         return grid_rows
 
@@ -771,7 +771,7 @@ def main():
     grid.load(puzfile)
 
     if html_mode:
-        printer_output_html(grid, style=print_style, width=print_width,
+        printer_output_json(grid, filename, style=print_style, width=print_width,
                        downs_only=downs_only)
         sys.exit()
 
